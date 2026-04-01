@@ -1,4 +1,4 @@
-from api_client import ApiClient
+from clients.api_client import ApiClient
 import time
 
 api = ApiClient(
@@ -15,11 +15,14 @@ start = time.perf_counter()
 resp = api.get(
     "/dci/v3/server",
     params={
-        # "where": "name CP '%Srv-1768461385-438-10%'",
-        "limit": ""
+        # "where": "name CP '%Srv-1768461385-450%'",
+        "limit": "100"
     },
 )
 
-end = time.perf_counter()
 
+end = time.perf_counter()
+data = resp.json()
+print(data["size"])
+print(len(data["list"]))
 print(f"Request time: {end - start:.3f} sec")

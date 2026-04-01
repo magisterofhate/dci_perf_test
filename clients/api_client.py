@@ -8,7 +8,6 @@ class ApiClient:
         login: str,
         password: str,
         auth_path: str = "/auth/v4/public/token",
-        timeout: float = 10.0,
     ):
         self.base_url = base_url.rstrip("/")
         self.login = login
@@ -16,9 +15,16 @@ class ApiClient:
         self.auth_path = auth_path
         self.token: str | None = None
 
+        client_timeout = httpx.Timeout(
+            connect=10.0,
+            read=60.0,
+            write=30.0,
+            pool=30.0,
+        )
+
         self.client = httpx.Client(
             base_url=self.base_url,
-            timeout=timeout,
+            timeout=client_timeout,
             verify=False,
         )
 
@@ -45,25 +51,31 @@ class ApiClient:
             "X-XSRF-Token": f'{self.token}'
         })
 
-    def get(self, url: str, **kwargs) -> httpx.Response:
-        response = self.client.get(url, **kwargs)
+    def _request_with_reauth(self, method: str, url: str, **kwargs):
+        response = self.client.request(method, url, **kwargs)
+
+        if response.status_code == 401:
+            # можно лог сюда
+            print("401 → re-auth")
+
+            self._authenticate()
+
+            response = self.client.request(method, url, **kwargs)
+
         response.raise_for_status()
         return response
+
+    def get(self, url: str, **kwargs) -> httpx.Response:
+        return self._request_with_reauth("GET", url, **kwargs)
 
     def post(self, url: str, **kwargs) -> httpx.Response:
-        response = self.client.post(url, **kwargs)
-        response.raise_for_status()
-        return response
+        return self._request_with_reauth("POST", url, **kwargs)
 
     def put(self, url: str, **kwargs) -> httpx.Response:
-        response = self.client.put(url, **kwargs)
-        response.raise_for_status()
-        return response
+        return self._request_with_reauth("PUT", url, **kwargs)
 
     def delete(self, url: str, **kwargs) -> httpx.Response:
-        response = self.client.delete(url, **kwargs)
-        response.raise_for_status()
-        return response
+        return self._request_with_reauth("DELETE", url, **kwargs)
 
     def close(self) -> None:
         self.client.close()
