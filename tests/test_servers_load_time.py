@@ -29,6 +29,7 @@ def test_servers_with_where(api, where_clause):
 
     log_response(response, data, duration, label="WHERE")
 
+
 @pytest.mark.parametrize("limit", [5, 10, 25, 50, 100, 250])
 def test_servers_with_front_limits(api, limit):
     params = build_params(limit=limit, orderby='id desc')
@@ -40,7 +41,8 @@ def test_servers_with_front_limits(api, limit):
 
     log_response(response, data, duration, label=f"LIMIT={limit}")
 
-@pytest.mark.parametrize("limit", [1000, 5000, 10000])
+
+@pytest.mark.parametrize("limit", [1000, 5000, 10000, 15000])
 def test_servers_with_large_limits(api, limit):
     params = build_params(limit=limit, orderby='id desc')
 
