@@ -1,5 +1,6 @@
 import time
 from typing import Tuple, Dict, Any
+import httpx
 
 
 BASE_PATH = "/dci/v3"
@@ -32,6 +33,15 @@ def perform_request(api, path: str, params: dict) -> Tuple[Any, Dict, float]:
     return response, data, duration
 
 
+def extract_response_metrics(response, data: dict) -> dict:
+    return {
+        "status_code": response.status_code,
+        "response_bytes": len(response.content),
+        "total_size": data.get("size"),
+        "returned_count": len(data.get("list", [])),
+    }
+
+
 def log_response(response, data, duration, label: str = ""):
     """
     Логирование в std_out
@@ -44,3 +54,73 @@ def log_response(response, data, duration, label: str = ""):
         f"bytes={len(response.content)} | "
         f"time={duration:.3f}s"
     )
+
+
+def run_logged_request(
+    *,
+    api,
+    path: str,
+    params: dict,
+    csv_logger,
+    request_node,
+    method: str = "GET",
+    timeout=None,
+):
+    start = time.perf_counter()
+
+    try:
+        if method != "GET":
+            raise ValueError(f"Unsupported method for now: {method}")
+
+        response = api.get(path, params=params, timeout=timeout)
+        duration = time.perf_counter() - start
+        data = response.json()
+
+        metrics = extract_response_metrics(response, data)
+
+        csv_logger(
+            test_name=request_node.name,
+            test_suite=request_node.fspath.basename,
+            endpoint=path,
+            method=method,
+            status_code=metrics["status_code"],
+            success=True,
+            duration_sec=duration,
+            response_bytes=metrics["response_bytes"],
+            total_size=metrics["total_size"],
+            returned_count=metrics["returned_count"],
+            orderby=params.get("orderby"),
+            where_clause=params.get("where"),
+            limit=params.get("limit"),
+            error_type=None,
+            error_message=None,
+        )
+
+        return response, data, duration
+
+    except Exception as exc:
+        duration = time.perf_counter() - start
+
+        status_code = None
+        if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+            status_code = exc.response.status_code
+
+        csv_logger(
+            test_name=request_node.name,
+            test_suite=request_node.fspath.basename,
+            endpoint=path,
+            method=method,
+            status_code=status_code,
+            success=False,
+            duration_sec=duration,
+            response_bytes=None,
+            total_size=None,
+            returned_count=None,
+            orderby=params.get("orderby"),
+            where_clause=params.get("where"),
+            limit=params.get("limit"),
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+
+        raise

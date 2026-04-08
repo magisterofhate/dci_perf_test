@@ -2,8 +2,8 @@ import pytest
 from helpers.api_helper import (
     BASE_PATH,
     build_params,
-    perform_request,
     log_response,
+    run_logged_request,
 )
 
 
@@ -15,10 +15,16 @@ from helpers.api_helper import (
         "name CP '%Rack000%'",
     ],
 )
-def test_rack_with_where(api, where_clause):
+def test_rack_with_where(api, where_clause, request, csv_result_logger):
     params = build_params(where=where_clause, orderby='device_count desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/rack', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/rack',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert isinstance(data["list"], list)
@@ -28,10 +34,16 @@ def test_rack_with_where(api, where_clause):
 
 
 @pytest.mark.parametrize("limit", [5, 10, 25, 50, 100, 250, 2000])
-def test_rack_with_front_limits(api, limit):
+def test_rack_with_front_limits(api, limit, request, csv_result_logger):
     params = build_params(limit=limit, orderby='device_count desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/rack', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/rack',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert len(data["list"]) <= limit

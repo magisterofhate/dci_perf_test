@@ -2,8 +2,8 @@ import pytest
 from helpers.api_helper import (
     BASE_PATH,
     build_params,
-    perform_request,
     log_response,
+    run_logged_request,
 )
 
 
@@ -18,10 +18,16 @@ from helpers.api_helper import (
     #     "where_exact_like_name",
     # ],
 )
-def test_servers_with_where(api, where_clause):
+def test_servers_with_where(api, where_clause, request, csv_result_logger):
     params = build_params(where=where_clause, orderby='id desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/server', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/server',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert isinstance(data["list"], list)
@@ -31,10 +37,16 @@ def test_servers_with_where(api, where_clause):
 
 
 @pytest.mark.parametrize("limit", [5, 10, 25, 50, 100, 250])
-def test_servers_with_front_limits(api, limit):
+def test_servers_with_front_limits(api, limit, request, csv_result_logger):
     params = build_params(limit=limit, orderby='id desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/server', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/server',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert len(data["list"]) <= limit
@@ -43,10 +55,16 @@ def test_servers_with_front_limits(api, limit):
 
 
 @pytest.mark.parametrize("limit", [1000, 5000, 10000, 15000])
-def test_servers_with_large_limits(api, limit):
+def test_servers_with_large_limits(api, limit, request, csv_result_logger):
     params = build_params(limit=limit, orderby='id desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/server', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/server',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert len(data["list"]) <= limit

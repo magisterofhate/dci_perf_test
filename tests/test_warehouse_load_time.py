@@ -2,8 +2,8 @@ import pytest
 from helpers.api_helper import (
     BASE_PATH,
     build_params,
-    perform_request,
     log_response,
+    run_logged_request,
 )
 
 
@@ -16,10 +16,16 @@ from helpers.api_helper import (
         "chassis",
     ],
 )
-def test_warehouse_with_device_type(api, device_type):
+def test_warehouse_with_device_type(api, device_type, request, csv_result_logger):
     params = build_params(orderby='warehouse_status desc')
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/warehouse/{device_type}', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/warehouse/{device_type}',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert isinstance(data["list"], list)
@@ -28,13 +34,18 @@ def test_warehouse_with_device_type(api, device_type):
 
 
 @pytest.mark.parametrize("limit", [1, 5, 25, 100])
-def test_warehouse_spare_part_with_limit(api, limit):
+def test_warehouse_spare_part_with_limit(api, limit, request, csv_result_logger):
     params = build_params(orderby='warehouse_status desc', limit=limit)
 
-    response, data, duration = perform_request(api, f'{BASE_PATH}/warehouse/spare_part', params)
+    response, data, duration = run_logged_request(
+        api=api,
+        path=f'{BASE_PATH}/warehouse/spare_part',
+        params=params,
+        csv_logger=csv_result_logger,
+        request_node=request.node,
+    )
 
     assert response.status_code == 200
     assert isinstance(data["list"], list)
-    # assert isinstance(data["size"], int)
 
     log_response(response, data, duration, label=f'LIMIT = {limit}')
