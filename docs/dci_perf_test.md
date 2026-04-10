@@ -151,12 +151,6 @@ Endpoint:
 {BASE_PATH}/server
 ```
 
-Сортировка:
-
-```
-orderby = id desc
-```
-
 #### test_servers_with_where
 
 Фильтрация серверов по имени:

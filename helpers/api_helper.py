@@ -65,7 +65,11 @@ def run_logged_request(
     request_node,
     method: str = "GET",
     timeout=None,
+    db_logger=None,
 ):
+    """
+        Метод по умолчанию логирует результаты в CSV файл. Если указан db_logger, то и в БД
+    """
     start = time.perf_counter()
 
     try:
@@ -95,6 +99,25 @@ def run_logged_request(
             error_type=None,
             error_message=None,
         )
+
+        if db_logger is not None:
+            db_logger(
+                test_name=request_node.name,
+                test_suite=request_node.fspath.basename,
+                endpoint=path,
+                method=method,
+                status_code=metrics["status_code"],
+                success=True,
+                duration_sec=duration,
+                response_bytes=metrics["response_bytes"],
+                total_size=metrics["total_size"],
+                returned_count=metrics["returned_count"],
+                orderby=params.get("orderby"),
+                where_clause=params.get("where"),
+                limit=params.get("limit"),
+                error_type=None,
+                error_message=None,
+            )
 
         return response, data, duration
 

@@ -1,12 +1,16 @@
+import uuid
+from datetime import datetime, UTC
+
 import pytest
 from clients.api_client import ApiClient
 from pathlib import Path
+from clients.db_client import MySQLClient
 
 from helpers.csv_logger import (
     build_results_file_path,
-    generate_run_id,
     write_csv_result,
 )
+from helpers.db_logger import write_result_into_db
 
 RESULTS_DIR = Path("results")
 
@@ -25,6 +29,20 @@ def api():
     )
     yield api
     api.close()
+
+
+@pytest.fixture(scope="session")
+def db():
+    client = MySQLClient(
+        host="172.31.36.82",
+        port=3306,
+        user="perf_user",
+        password="strong_password",
+        database="perf_tests",
+    )
+    connection = client.connect()
+    yield connection
+    connection.close()
 
 
 @pytest.fixture(scope="session")
@@ -76,3 +94,52 @@ def csv_result_logger(results_csv_path, run_id):
         )
 
     return _log
+
+
+@pytest.fixture(scope="session")
+def db_result_logger(db, run_id):
+    def _log(
+            *,
+            test_name: str,
+            test_suite: str,
+            endpoint: str,
+            method: str,
+            status_code: int | None,
+            success: bool,
+            duration_sec: float,
+            response_bytes: int | None = None,
+            total_size: int | None = None,
+            returned_count: int | None = None,
+            orderby: str | None = None,
+            where_clause: str | None = None,
+            limit: int | None = None,
+            error_type: str | None = None,
+            error_message: str | None = None,
+    ):
+        write_result_into_db(
+            db,
+            run_id=run_id,
+            test_name=test_name,
+            test_suite=test_suite,
+            endpoint=endpoint,
+            method=method,
+            status_code=status_code,
+            success=success,
+            duration_sec=duration_sec,
+            response_bytes=response_bytes,
+            total_size=total_size,
+            returned_count=returned_count,
+            orderby=orderby,
+            where_clause=where_clause,
+            limit=limit,
+            error_type=error_type,
+            error_message=error_message,
+        )
+
+    return _log
+
+
+def generate_run_id() -> str:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    short_uuid = uuid.uuid4().hex[:8]
+    return f"{timestamp}_{short_uuid}"

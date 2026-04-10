@@ -1,5 +1,4 @@
 import csv
-import uuid
 from datetime import datetime, UTC
 from pathlib import Path
 
@@ -23,12 +22,6 @@ CSV_HEADERS = [
     "error_type",
     "error_message",
 ]
-
-
-def generate_run_id() -> str:
-    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    short_uuid = uuid.uuid4().hex[:8]
-    return f"{timestamp}_{short_uuid}"
 
 
 def build_results_file_path(results_dir: str | Path, run_id: str) -> Path:

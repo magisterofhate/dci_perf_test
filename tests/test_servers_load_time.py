@@ -18,7 +18,7 @@ from helpers.api_helper import (
     #     "where_exact_like_name",
     # ],
 )
-def test_servers_with_where(api, where_clause, request, csv_result_logger):
+def test_servers_with_where(api, where_clause, request, csv_result_logger, db_result_logger):
     params = build_params(where=where_clause, orderby='id desc')
 
     response, data, duration = run_logged_request(
@@ -26,6 +26,7 @@ def test_servers_with_where(api, where_clause, request, csv_result_logger):
         path=f'{BASE_PATH}/server',
         params=params,
         csv_logger=csv_result_logger,
+        db_logger=db_result_logger,
         request_node=request.node,
     )
 
