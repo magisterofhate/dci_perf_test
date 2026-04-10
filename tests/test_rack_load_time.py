@@ -15,7 +15,7 @@ from helpers.api_helper import (
         "name CP '%Rack000%'",
     ],
 )
-def test_rack_with_where(api, where_clause, request, csv_result_logger):
+def test_rack_with_where(api, where_clause, request, csv_result_logger, db_result_logger):
     params = build_params(where=where_clause, orderby='device_count desc')
 
     response, data, duration = run_logged_request(
@@ -23,6 +23,7 @@ def test_rack_with_where(api, where_clause, request, csv_result_logger):
         path=f'{BASE_PATH}/rack',
         params=params,
         csv_logger=csv_result_logger,
+        db_logger=db_result_logger,
         request_node=request.node,
     )
 
@@ -34,7 +35,7 @@ def test_rack_with_where(api, where_clause, request, csv_result_logger):
 
 
 @pytest.mark.parametrize("limit", [5, 10, 25, 50, 100, 250, 2000])
-def test_rack_with_front_limits(api, limit, request, csv_result_logger):
+def test_rack_with_front_limits(api, limit, request, csv_result_logger, db_result_logger):
     params = build_params(limit=limit, orderby='device_count desc')
 
     response, data, duration = run_logged_request(
@@ -42,6 +43,7 @@ def test_rack_with_front_limits(api, limit, request, csv_result_logger):
         path=f'{BASE_PATH}/rack',
         params=params,
         csv_logger=csv_result_logger,
+        db_logger=db_result_logger,
         request_node=request.node,
     )
 

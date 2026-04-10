@@ -104,54 +104,27 @@ def run_logged_request(
         metrics = extract_response_metrics(response, data)
         success = True
 
-        results_payload = generate_result_payload(request_node, path, method, metrics, success, duration, params)
+        result_payload = generate_result_payload(request_node, path, method, metrics, success, duration, params)
 
-        csv_logger(
-            test_name=request_node.name,
-            test_suite=request_node.fspath.basename,
-            endpoint=path,
-            method=method,
-            status_code=metrics["status_code"],
-            success=True,
-            duration_sec=duration,
-            response_bytes=metrics["response_bytes"],
-            total_size=metrics["total_size"],
-            returned_count=metrics["returned_count"],
-            orderby=params.get("orderby"),
-            where_clause=params.get("where"),
-            limit=params.get("limit"),
-            error_type=None,
-            error_message=None,
-        )
+        csv_logger(**result_payload)
 
         if db_logger is not None:
-            db_logger(**results_payload)
+            db_logger(**result_payload)
 
         return response, data, duration
 
-    except Exception as exc:
+    except Exception(httpx.HTTPStatusError) as exc:
         duration = time.perf_counter() - start
 
-        status_code = None
-        if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
-            status_code = exc.response.status_code
+        metrics = extract_response_metrics(exc.response, data={})
+        success = False
 
-        csv_logger(
-            test_name=request_node.name,
-            test_suite=request_node.fspath.basename,
-            endpoint=path,
-            method=method,
-            status_code=status_code,
-            success=False,
-            duration_sec=duration,
-            response_bytes=None,
-            total_size=None,
-            returned_count=None,
-            orderby=params.get("orderby"),
-            where_clause=params.get("where"),
-            limit=params.get("limit"),
-            error_type=type(exc).__name__,
-            error_message=str(exc),
-        )
+        result_payload = generate_result_payload(request_node, path, method, metrics, success, duration, params,
+                                                 error_type=type(exc).__name__, error_message=str(exc))
+
+        csv_logger(**result_payload)
+
+        if db_logger is not None:
+            db_logger(**result_payload)
 
         raise
