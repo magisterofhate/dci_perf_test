@@ -56,6 +56,27 @@ def log_response(response, data, duration, label: str = ""):
     )
 
 
+def generate_result_payload(request_node, path, method, metrics, success, duration, params,
+                            error_type=None, error_message=None):
+    return {
+        "test_name": request_node.name,
+        "test_suite": request_node.fspath.basename,
+        "endpoint": path,
+        "method": method,
+        "status_code": metrics["status_code"],
+        "success": success,
+        "duration_sec": duration,
+        "response_bytes": metrics["response_bytes"],
+        "total_size": metrics["total_size"],
+        "returned_count": metrics["returned_count"],
+        "orderby": params.get("orderby"),
+        "where_clause": params.get("where"),
+        "limit": params.get("limit"),
+        "error_type": error_type,
+        "error_message": error_message,
+    }
+
+
 def run_logged_request(
     *,
     api,
@@ -81,6 +102,9 @@ def run_logged_request(
         data = response.json()
 
         metrics = extract_response_metrics(response, data)
+        success = True
+
+        results_payload = generate_result_payload(request_node, path, method, metrics, success, duration, params)
 
         csv_logger(
             test_name=request_node.name,
@@ -101,23 +125,7 @@ def run_logged_request(
         )
 
         if db_logger is not None:
-            db_logger(
-                test_name=request_node.name,
-                test_suite=request_node.fspath.basename,
-                endpoint=path,
-                method=method,
-                status_code=metrics["status_code"],
-                success=True,
-                duration_sec=duration,
-                response_bytes=metrics["response_bytes"],
-                total_size=metrics["total_size"],
-                returned_count=metrics["returned_count"],
-                orderby=params.get("orderby"),
-                where_clause=params.get("where"),
-                limit=params.get("limit"),
-                error_type=None,
-                error_message=None,
-            )
+            db_logger(**results_payload)
 
         return response, data, duration
 

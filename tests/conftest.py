@@ -96,44 +96,55 @@ def csv_result_logger(results_csv_path, run_id):
     return _log
 
 
-@pytest.fixture(scope="session")
+# @pytest.fixture
+# def db_result_logger(db, run_id):
+#     def _log(
+#             *,
+#             test_name: str,
+#             test_suite: str,
+#             endpoint: str,
+#             method: str,
+#             status_code: int | None,
+#             success: bool,
+#             duration_sec: float,
+#             response_bytes: int | None = None,
+#             total_size: int | None = None,
+#             returned_count: int | None = None,
+#             orderby: str | None = None,
+#             where_clause: str | None = None,
+#             limit: int | None = None,
+#             error_type: str | None = None,
+#             error_message: str | None = None,
+#     ):
+#         write_result_into_db(
+#             db,
+#             run_id=run_id,
+#             test_name=test_name,
+#             test_suite=test_suite,
+#             endpoint=endpoint,
+#             method=method,
+#             status_code=status_code,
+#             success=success,
+#             duration_sec=duration_sec,
+#             response_bytes=response_bytes,
+#             total_size=total_size,
+#             returned_count=returned_count,
+#             orderby=orderby,
+#             where_clause=where_clause,
+#             limit=limit,
+#             error_type=error_type,
+#             error_message=error_message,
+#         )
+#
+#     return _log
+
+@pytest.fixture
 def db_result_logger(db, run_id):
-    def _log(
-            *,
-            test_name: str,
-            test_suite: str,
-            endpoint: str,
-            method: str,
-            status_code: int | None,
-            success: bool,
-            duration_sec: float,
-            response_bytes: int | None = None,
-            total_size: int | None = None,
-            returned_count: int | None = None,
-            orderby: str | None = None,
-            where_clause: str | None = None,
-            limit: int | None = None,
-            error_type: str | None = None,
-            error_message: str | None = None,
-    ):
+    def _log(**result_payload):
         write_result_into_db(
             db,
             run_id=run_id,
-            test_name=test_name,
-            test_suite=test_suite,
-            endpoint=endpoint,
-            method=method,
-            status_code=status_code,
-            success=success,
-            duration_sec=duration_sec,
-            response_bytes=response_bytes,
-            total_size=total_size,
-            returned_count=returned_count,
-            orderby=orderby,
-            where_clause=where_clause,
-            limit=limit,
-            error_type=error_type,
-            error_message=error_message,
+            **result_payload
         )
 
     return _log
