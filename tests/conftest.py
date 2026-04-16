@@ -1,12 +1,10 @@
 import uuid
 from datetime import datetime, UTC
-import os
-from dotenv import load_dotenv
-
 import pytest
 from clients.api_client import ApiClient
 from pathlib import Path
 from clients.db_client import MySQLClient
+from config.settings import Settings, load_settings
 
 from helpers.csv_logger import (
     build_results_file_path,
@@ -17,18 +15,14 @@ from helpers.db_logger import write_result_into_db
 RESULTS_DIR = Path("results")
 
 
-load_dotenv()
-
-def _get_bool_env(name: str, default: bool = False) -> bool:
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
+@pytest.fixture(scope="session")
+def settings() -> Settings:
+    return load_settings()
 
 
 @pytest.fixture(scope="session")
-def debug_response_log_enabled() -> bool:
-    return _get_bool_env("DEBUG_RESPONSE_LOG")
+def debug_response_log_enabled(settings: Settings) -> bool:
+    return settings.debug.response_log_enabled
 
 
 @pytest.fixture(scope="session")
@@ -37,24 +31,26 @@ def run_id():
 
 
 @pytest.fixture(scope="session")
-def api():
+def api(settings : Settings):
     api = ApiClient(
-        base_url="https://172.31.48.29/",
-        login="test@test.com",
-        password="Ru77Kq67",
+        base_url=settings.api.base_url,
+        login=settings.api.login,
+        password=settings.api.password,
+        verify_ssl=settings.api.verify_ssl,
+        timeout=settings.api.timeout,
     )
     yield api
     api.close()
 
 
 @pytest.fixture(scope="session")
-def db():
+def db(settings : Settings):
     client = MySQLClient(
-        host="172.31.36.82",
-        port=3306,
-        user="perf_user",
-        password="strong_password",
-        database="perf_tests",
+        host=settings.db.host,
+        port=settings.db.port,
+        user=settings.db.user,
+        password=settings.db.password,
+        database=settings.db.database,
     )
     connection = client.connect()
     yield connection
@@ -82,7 +78,10 @@ def csv_result_logger(results_csv_path, run_id):
 
 
 @pytest.fixture
-def db_result_logger(db, run_id):
+def db_result_logger(db, run_id, settings: Settings):
+    if not settings.debug.db_logging_enabled:
+        return None
+
     def _log(**result_payload):
         write_result_into_db(
             db,

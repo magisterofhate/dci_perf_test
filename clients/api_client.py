@@ -7,6 +7,8 @@ class ApiClient:
         base_url: str,
         login: str,
         password: str,
+        verify_ssl: bool,
+        timeout,
         auth_path: str = "/auth/v4/public/token",
     ):
         self.base_url = base_url.rstrip("/")
@@ -17,7 +19,7 @@ class ApiClient:
 
         client_timeout = httpx.Timeout(
             connect=10.0,
-            read=60.0,
+            read=timeout,
             write=30.0,
             pool=30.0,
         )
@@ -25,7 +27,7 @@ class ApiClient:
         self.client = httpx.Client(
             base_url=self.base_url,
             timeout=client_timeout,
-            verify=False,
+            verify=verify_ssl,
         )
 
         self._authenticate()
