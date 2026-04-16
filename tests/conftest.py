@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime, UTC
+import os
+from dotenv import load_dotenv
 
 import pytest
 from clients.api_client import ApiClient
@@ -13,6 +15,20 @@ from helpers.csv_logger import (
 from helpers.db_logger import write_result_into_db
 
 RESULTS_DIR = Path("results")
+
+
+load_dotenv()
+
+def _get_bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+@pytest.fixture(scope="session")
+def debug_response_log_enabled() -> bool:
+    return _get_bool_env("DEBUG_RESPONSE_LOG")
 
 
 @pytest.fixture(scope="session")

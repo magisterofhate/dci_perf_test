@@ -15,7 +15,8 @@ from helpers.api_helper import (
         "name CP '%Rack000%'",
     ],
 )
-def test_rack_with_where(api, where_clause, request, csv_result_logger, db_result_logger):
+def test_rack_with_where(api, where_clause, request, csv_result_logger,
+                         db_result_logger, debug_response_log_enabled):
     params = build_params(where=where_clause, orderby='device_count desc')
 
     response, data, duration = run_logged_request(
@@ -31,11 +32,12 @@ def test_rack_with_where(api, where_clause, request, csv_result_logger, db_resul
     assert isinstance(data["list"], list)
     assert isinstance(data["size"], int)
 
-    log_response(response, data, duration, label="WHERE")
+    log_response(response, data, duration, enabled=debug_response_log_enabled, label="WHERE")
 
 
 @pytest.mark.parametrize("limit", [5, 10, 25, 50, 100, 250, 2000])
-def test_rack_with_front_limits(api, limit, request, csv_result_logger, db_result_logger):
+def test_rack_with_front_limits(api, limit, request, csv_result_logger,
+                                db_result_logger, debug_response_log_enabled):
     params = build_params(limit=limit, orderby='device_count desc')
 
     response, data, duration = run_logged_request(
@@ -50,4 +52,4 @@ def test_rack_with_front_limits(api, limit, request, csv_result_logger, db_resul
     assert response.status_code == 200
     assert len(data["list"]) <= limit
 
-    log_response(response, data, duration, label=f"LIMIT={limit}")
+    log_response(response, data, duration, enabled=debug_response_log_enabled, label=f"LIMIT={limit}")

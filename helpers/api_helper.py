@@ -42,10 +42,12 @@ def extract_response_metrics(response, data: dict) -> dict:
     }
 
 
-def log_response(response, data, duration, label: str = ""):
+def log_response(response, data, duration, enabled = False, label: str = ""):
     """
-    Логирование в std_out
+    Логирование в std_out, если включен debug mode (DEBUG_RESPONSE_LOG=false)
     """
+    if not enabled:
+        return
     print(
         f"\n[{label}] "
         f"status={response.status_code} | "
