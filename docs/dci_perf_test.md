@@ -193,7 +193,8 @@ db_result_logger=None
 - `api` — API клиент
 - `db` — подключение к БД
 - `db_result_logger` — логер БД
-- `debug_response_log_enabled` — debug-флаг
+- `csv_result_logger` — логер для CSV
+- `debug_response_log_enabled` — debug-флаг, включающий отображение результатов теста в std-out
 
 ---
 
